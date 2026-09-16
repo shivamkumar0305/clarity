@@ -95,16 +95,27 @@ TOOLS = [
 ]
 
 
+from concurrent.futures import ThreadPoolExecutor, TimeoutError
+
+
+def _fetch_ddgs(query: str, max_results: int = 3) -> str:
+    results = DDGS().text(query, max_results=max_results)
+    if not results:
+        return "No results found."
+    return "\n\n".join(
+        f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}"
+        for r in results
+    )
+
+
 def web_search(query: str, max_results: int = 3) -> str:
-    """Executes a DuckDuckGo search and returns formatted results."""
+    """Executes a DuckDuckGo search with a 5s strict timeout."""
     try:
-        results = DDGS().text(query, max_results=max_results)
-        if not results:
-            return "No results found."
-        return "\n\n".join(
-            f"Title: {r['title']}\nURL: {r['href']}\nSnippet: {r['body']}"
-            for r in results
-        )
+        with ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(_fetch_ddgs, query, max_results)
+            return future.result(timeout=5)
+    except TimeoutError:
+        return "Search timed out."
     except Exception as e:
         return f"Search error: {str(e)}"
 
@@ -222,7 +233,11 @@ def _run_formatter(researched_text: str) -> dict:
 def generate_roadmap(idea_text: str) -> dict:
     """
     Full pipeline: idea text -> researched+grounded markdown -> strict JSON roadmap.
-    Raises on failure — caller (the view) decides how to handle it.
+    Fault-tolerant: falls back to direct LLM synthesis if researcher/search fails.
     """
-    researched_text = _run_researcher(idea_text)
+    try:
+        researched_text = _run_researcher(idea_text)
+    except Exception:
+        researched_text = f"Idea to map into roadmap: {idea_text}"
+
     return _run_formatter(researched_text)
