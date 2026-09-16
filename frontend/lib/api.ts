@@ -149,6 +149,14 @@ export async function apiRequest<T>(
       }
     }
 
+    // Handle 429 Too Many Requests
+    if (response.status === 429) {
+      throw new ApiError(
+        "Rate limit exceeded. You have reached the maximum allowed requests/roadmap generations for now. Please wait a while before trying again.",
+        429
+      )
+    }
+
     if (!response.ok) {
       let errorData: any = null
       try {
