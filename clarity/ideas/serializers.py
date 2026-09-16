@@ -9,5 +9,5 @@ class IdeaCreateSerializer(serializers.Serializer):
 class IdeaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Idea
-        fields = ["id", "input_text", "phases", "status", "error_message", "created_at"]
+        fields = ["id", "idea_title", "input_text", "phases", "status", "error_message", "created_at"]
         read_only_fields = fields

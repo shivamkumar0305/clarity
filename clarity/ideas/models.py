@@ -11,6 +11,7 @@ class Idea(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="ideas")
     input_text = models.TextField()
+    idea_title = models.CharField(max_length=255, blank=True)
     phases = models.JSONField(null=True, blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
     error_message = models.TextField(null=True, blank=True)

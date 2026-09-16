@@ -22,8 +22,9 @@ class IdeaCreateView(APIView):
         )
 
         try:
-            phases = generate_roadmap(input_text)
-            idea.phases = phases
+            result = generate_roadmap(input_text)
+            idea.idea_title = result.get("idea_title", "")
+            idea.phases = result.get("phases", [])
             idea.status = "done"
             idea.save()
         except Exception as e:
