@@ -62,7 +62,11 @@ CRITICAL SEARCH RULE:
 - After receiving the search results, immediately generate your full response."""
 
 FORMATTER_PROMPT = """You are a strict data formatting assistant.
-Your only job is to take the provided text and map it exactly into the required JSON schema.
+Your only job is to take the provided text and map it into a single JSON object.
+
+CRITICAL STRUCTURAL RULE:
+- The root of your output MUST be a JSON OBJECT: {"idea_title": "...", "phases": [...]}.
+- Do NOT output a top-level JSON array like [{...}]. The root element MUST be an object.
 
 RULES:
 1. Do not invent, guess, or hallucinate any information.
@@ -153,18 +157,68 @@ def _run_researcher(idea_text: str) -> str:
 
 def _run_formatter(researched_text: str) -> dict:
     """Phase 2: locks the free-text roadmap into strict schema-validated JSON."""
-    response = client.chat.completions.create(
-        model=MODEL,
-        messages=[
-            {"role": "system", "content": FORMATTER_PROMPT},
-            {"role": "user", "content": researched_text},
-        ],
-        response_format={
-            "type": "json_schema",
-            "json_schema": {"name": "roadmap", "schema": ROADMAP_SCHEMA, "strict": True},
-        },
-    )
-    return json.loads(response.choices[0].message.content)
+    try:
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {"role": "system", "content": FORMATTER_PROMPT},
+                {"role": "user", "content": researched_text},
+            ],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {"name": "roadmap", "schema": ROADMAP_SCHEMA, "strict": True},
+            },
+        )
+        content = response.choices[0].message.content
+        data = json.loads(content)
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            data = data[0]
+        return data
+    except Exception as e:
+        # Check if Groq returned failed_generation in error response
+        err_body = getattr(e, "body", {}) or {}
+        failed_gen = None
+        if isinstance(err_body, dict):
+            failed_gen = err_body.get("error", {}).get("failed_generation")
+
+        if not failed_gen:
+            err_str = str(e)
+            if "failed_generation" in err_str:
+                try:
+                    import re
+                    match = re.search(r"['\"]failed_generation['\"]:\s*['\"](.*?)['\"]", err_str, re.DOTALL)
+                    if match:
+                        failed_gen = match.group(1).encode().decode('unicode_escape')
+                except Exception:
+                    pass
+
+        if failed_gen:
+            try:
+                parsed = json.loads(failed_gen)
+                if isinstance(parsed, list) and len(parsed) > 0 and isinstance(parsed[0], dict):
+                    parsed = parsed[0]
+                if isinstance(parsed, dict) and "idea_title" in parsed and "phases" in parsed:
+                    return parsed
+            except Exception:
+                pass
+
+        # Fallback request using simple json_object mode
+        response = client.chat.completions.create(
+            model=MODEL,
+            messages=[
+                {
+                    "role": "system",
+                    "content": FORMATTER_PROMPT + "\nReturn a single JSON object with keys 'idea_title' and 'phases'.",
+                },
+                {"role": "user", "content": researched_text},
+            ],
+            response_format={"type": "json_object"},
+        )
+        content = response.choices[0].message.content
+        data = json.loads(content)
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            data = data[0]
+        return data
 
 
 def generate_roadmap(idea_text: str) -> dict:

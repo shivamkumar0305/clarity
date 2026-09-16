@@ -1,5 +1,6 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .models import Idea
@@ -9,6 +10,8 @@ from .services import generate_roadmap
 
 class IdeaCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "idea_create"
 
     def post(self, request):
         in_serializer = IdeaCreateSerializer(data=request.data)
