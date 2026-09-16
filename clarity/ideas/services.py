@@ -147,8 +147,6 @@ def _run_researcher(idea_text: str) -> str:
         final_response = client.chat.completions.create(
             model=MODEL,
             messages=messages,
-            tools=TOOLS,
-            tool_choice="none",
         )
         return final_response.choices[0].message.content
 
