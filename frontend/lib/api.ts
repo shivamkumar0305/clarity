@@ -1,6 +1,15 @@
 import type { Idea } from "./roadmap"
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+function getBaseUrl(): string {
+  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  return url.replace(/\/+$/, "")
+}
+
+function normalizePath(path: string): string {
+  let p = path.startsWith("/") ? path : `/${path}`
+  if (!p.endsWith("/")) p = `${p}/`
+  return p
+}
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null
@@ -95,25 +104,28 @@ export async function apiRequest<T>(
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeout)
 
+  const cleanPath = normalizePath(path)
+  const requestUrl = `${getBaseUrl()}${cleanPath}`
+
   const token = getAccessToken()
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(options.headers as Record<string, string>),
   }
 
-  if (token && path.startsWith("/api/ideas/")) {
+  if (token && cleanPath.startsWith("/api/ideas/")) {
     headers["Authorization"] = `Bearer ${token}`
   }
 
   try {
-    const response = await fetch(`${API_URL}${path}`, {
+    const response = await fetch(requestUrl, {
       ...options,
       headers,
       signal: controller.signal,
     })
 
     // Handle 401 Unauthorized with silent refresh (once)
-    if (response.status === 401 && !isRetry && path.startsWith("/api/ideas/")) {
+    if (response.status === 401 && !isRetry && cleanPath.startsWith("/api/ideas/")) {
       clearTimeout(timer)
       let newToken: string | null = null
 
@@ -140,7 +152,7 @@ export async function apiRequest<T>(
     }
 
     // Special handling for 502 on POST /api/ideas/ (which returns the failed Idea object)
-    if (response.status === 502 && path === "/api/ideas/") {
+    if (response.status === 502 && cleanPath === "/api/ideas/") {
       try {
         const failedIdea = await response.json()
         return failedIdea as T
