@@ -1,0 +1,140 @@
+{
+  "idea_title": "Habit-Tracking Web App",
+  "phases": [
+    {
+      "phase_name": "UI/UX Foundations & Front\u2011end Scaffold",
+      "steps": [
+        "Define user flows (sign\u2011up/login \u2192 habit list \u2192 habit detail \u2192 insights dashboard). Sketch low\u2011fidelity wireframes (Figma/pen\u2011and\u2011paper \u2013 no need for a link).",
+        "Set up React project with Vite (fast dev server) or Create\u2011React\u2011App.",
+        "Install a UI component library (e.g., Radix UI or MUI) for consistent styling.",
+        "Build core pages as functional components: AuthPage (login/register), HabitsPage (list + add habit), HabitDetail (daily check\u2011off), InsightsPage (charts).",
+        "Add state\u2011management (React Context + useReducer or Redux Toolkit if you anticipate complex flows).",
+        "Integrate React Router for navigation and protect routes with a simple auth guard.",
+        "Set up form validation with React Hook Form + Yup.",
+        "Wire up API client using Axios (or native fetch) \u2013 keep calls abstracted in a services/ folder.",
+        "Write component\u2011level unit tests with Jest + React Testing Library."
+      ],
+      "milestone": "Live UI prototype hosted on a temporary URL (e.g., Vercel preview) that demonstrates: User registration & login UI (no real backend yet) and ability to create, edit, and delete a habit locally (state persisted in localStorage).",
+      "skills_required": [
+        {
+          "skill_name": "React",
+          "resources": [
+            {
+              "title": "React Official Docs",
+              "url": "https://react.dev/learn"
+            }
+          ]
+        },
+        {
+          "skill_name": "CSS-in-JS",
+          "resources": []
+        },
+        {
+          "skill_name": "Tailwind",
+          "resources": []
+        },
+        {
+          "skill_name": "Client-side State",
+          "resources": []
+        }
+      ]
+    },
+    {
+      "phase_name": "Backend API & Data Model",
+      "steps": [
+        "Initialize a Node.js project (npm init) and install Express.",
+        "Set up TypeScript (optional but recommended for safety).",
+        "Implement authentication: Password hashing with bcrypt; JWT issuance (jsonwebtoken) for stateless auth.",
+        "Define RESTful routes: POST /api/auth/register & POST /api/auth/login; GET /api/habits (user\u2011scoped); POST /api/habits (create); PATCH /api/habits/:id (update status); GET /api/insights (aggregated progress).",
+        "Create middleware for request validation (express-validator) and JWT verification (protect habit/insights routes).",
+        "Write unit/integration tests with Jest + Supertest.",
+        "Add CORS config to allow the React front\u2011end to call the API."
+      ],
+      "milestone": "Fully functional API server running locally (or on a cloud sandbox) that can: Register / login users, issuing JWTs; Persist habit CRUD operations (stubbed with an in\u2011memory store for now); Return a JSON payload for the insights endpoint (e.g., \u201c7\u2011day streak\u201d).",
+      "skills_required": [
+        {
+          "skill_name": "Express",
+          "resources": [
+            {
+              "title": "Express Official Guide",
+              "url": "https://expressjs.com/en/starter/hello-world.html"
+            }
+          ]
+        },
+        {
+          "skill_name": "JWT Authentication",
+          "resources": []
+        },
+        {
+          "skill_name": "TypeScript",
+          "resources": []
+        }
+      ]
+    },
+    {
+      "phase_name": "Persistence & Analytics Engine",
+      "steps": [
+        "Provision PostgreSQL (local Docker container or managed dev instance).",
+        "Design relational schema for users, habits, habit_entries, and insights (materialized view).",
+        "Use Prisma ORM (or knex) to generate type\u2011safe models and migrations.",
+        "Replace the in\u2011memory store in the Express layer with real DB calls (prisma.habit.findMany, etc.).",
+        "Implement transactional logic for marking a habit as completed (ensure one entry per day).",
+        "Write SQL queries / Prisma aggregations for the insights endpoint: current streak, longest streak, weekly completion rate, heat\u2011map data.",
+        "Add integration tests that spin up a temporary PostgreSQL container (via testcontainers).",
+        "Set up database seeding for local development (sample users & habits)."
+      ],
+      "milestone": "Production\u2011grade API connected to a PostgreSQL database, exposing: Secure CRUD for habits; Real\u2011time insights data (validated against the DB); All tests passing (npm test exits with 0).",
+      "skills_required": [
+        {
+          "skill_name": "PostgreSQL",
+          "resources": [
+            {
+              "title": "PostgreSQL Official Documentation",
+              "url": "https://www.postgresql.org/docs/current/index.html"
+            }
+          ]
+        },
+        {
+          "skill_name": "Prisma ORM",
+          "resources": []
+        },
+        {
+          "skill_name": "Database Migrations",
+          "resources": []
+        }
+      ]
+    },
+    {
+      "phase_name": "Production\u2011Ready Delivery",
+      "steps": [
+        "Dockerise both services: Dockerfile for React (multi\u2011stage build \u2192 Nginx); Dockerfile for Express (Node base, copy compiled TS, npm start); docker-compose.yml tying together frontend, backend, postgres.",
+        "Create environment variable conventions (.env.example) for DB URL, JWT secret, etc.",
+        "Set up a CI pipeline (GitHub Actions, GitLab CI, or CircleCI): Lint \u2192 Test \u2192 Build Docker images \u2192 Push to registry; Deploy to a cloud platform (Render, Railway, Fly.io, or AWS Elastic Beanstalk).",
+        "Enable HTTPS (let the platform provide TLS, or use an Nginx reverse\u2011proxy with Let\u2019s Encrypt).",
+        "Configure logging & monitoring (e.g., pino for Node logs, Sentry for error tracking).",
+        "(Optional) Turn the React build into a Progressive Web App: add service worker, manifest, offline fallback.",
+        "Write end\u2011to\u2011end tests with Cypress that run against the deployed staging URL."
+      ],
+      "milestone": "Live production instance reachable at a custom domain, with: Secure user authentication; Persistent habit data & analytics; Automated build\u2011test\u2011deploy pipeline.",
+      "skills_required": [
+        {
+          "skill_name": "Docker",
+          "resources": [
+            {
+              "title": "Docker Official Docs",
+              "url": "https://docs.docker.com/get-started/"
+            }
+          ]
+        },
+        {
+          "skill_name": "CI/CD",
+          "resources": []
+        },
+        {
+          "skill_name": "Cloud Deployment",
+          "resources": []
+        }
+      ]
+    }
+  ]
+}
